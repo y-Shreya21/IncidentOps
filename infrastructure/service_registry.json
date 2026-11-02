@@ -1,0 +1,48 @@
+{
+  "services": {
+    "frontend": {
+      "name": "frontend",
+      "tier": "tier-1",
+      "owner": "web-team",
+      "host": "localhost",
+      "port": 3000,
+      "health_endpoint": "http://localhost:3000/health",
+      "metrics_endpoint": "http://localhost:3000/metrics",
+      "logs_path": "logs/frontend.log",
+      "dependencies": ["payment-api", "auth-service"]
+    },
+    "payment-api": {
+      "name": "payment-api",
+      "tier": "tier-1",
+      "owner": "checkout-platform",
+      "host": "localhost",
+      "port": 8080,
+      "health_endpoint": "http://localhost:8080/health",
+      "metrics_endpoint": "http://localhost:8080/metrics",
+      "logs_path": "logs/payment-api.log",
+      "dependencies": ["postgres", "auth-service"]
+    },
+    "auth-service": {
+      "name": "auth-service",
+      "tier": "tier-1",
+      "owner": "security-team",
+      "host": "localhost",
+      "port": 8081,
+      "health_endpoint": "http://localhost:8081/health",
+      "metrics_endpoint": "http://localhost:8081/metrics",
+      "logs_path": "logs/auth-service.log",
+      "dependencies": ["postgres"]
+    },
+    "postgres": {
+      "name": "postgres",
+      "tier": "tier-0",
+      "owner": "data-infra",
+      "host": "localhost",
+      "port": 5432,
+      "health_endpoint": "http://localhost:5432/health",
+      "metrics_endpoint": "http://localhost:5432/metrics",
+      "logs_path": "logs/postgres.log",
+      "dependencies": []
+    }
+  }
+}

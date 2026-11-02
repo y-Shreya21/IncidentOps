@@ -1,0 +1,41 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "title": "Active Incidents Total",
+      "type": "stat",
+      "gridPos": { "h": 6, "w": 6, "x": 0, "y": 0 },
+      "targets": [{ "expr": "incidentops_investigations_total", "refId": "A" }]
+    },
+    {
+      "title": "System Uptime (Seconds)",
+      "type": "stat",
+      "gridPos": { "h": 6, "w": 6, "x": 6, "y": 0 },
+      "targets": [{ "expr": "incidentops_uptime_seconds", "refId": "A" }]
+    },
+    {
+      "title": "Agent Execution Latencies",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 6 },
+      "targets": [{ "expr": "incidentops_agent_duration_seconds", "legendFormat": "{{agent}}", "refId": "A" }]
+    },
+    {
+      "title": "Tool Failure Counters",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 6 },
+      "targets": [{ "expr": "incidentops_tool_errors_total", "legendFormat": "{{tool}}", "refId": "A" }]
+    }
+  ],
+  "schemaVersion": 38,
+  "style": "dark",
+  "tags": ["incidentops", "sre", "multi-agent"],
+  "time": { "from": "now-6h", "to": "now" },
+  "title": "AI IncidentOps Production War-Room Overview",
+  "version": 1
+}

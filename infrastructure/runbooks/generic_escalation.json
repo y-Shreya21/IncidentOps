@@ -1,0 +1,20 @@
+{
+  "runbook_id": "RB-ESC-004",
+  "title": "Insufficient Evidence Incident Escalation",
+  "applicable_symptoms": ["unknown symptom", "ambiguous error", "transient failure", "insufficient evidence"],
+  "recommended_action": "hold_and_escalate",
+  "fallback_action": "hold_and_escalate",
+  "target_service": "affected_service",
+  "risk_level": "high",
+  "preconditions": [
+    "No distinct error signatures identified in recent logs",
+    "All service health checks and dependencies report healthy status",
+    "Evidence is insufficient to isolate root cause with high confidence"
+  ],
+  "steps": [
+    "Do not execute speculative or disruptive restarts or rollbacks",
+    "Page primary on-call Site Reliability Engineer (SRE) and service owner",
+    "Enable elevated debug logging level on affected service",
+    "Maintain war-room monitoring until manual triaging begins"
+  ]
+}

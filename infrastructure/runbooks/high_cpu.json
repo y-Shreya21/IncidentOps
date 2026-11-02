@@ -1,0 +1,18 @@
+{
+  "runbook_id": "RB-CPU-003",
+  "title": "High CPU and Resource Saturation Remediation",
+  "applicable_symptoms": ["high cpu utilization", "cpu spike", "thread starvation", "resource exhaustion", "request queuing"],
+  "recommended_action": "restart",
+  "fallback_action": "hold_and_escalate",
+  "target_service": "affected_service",
+  "risk_level": "medium",
+  "preconditions": [
+    "CPU utilization exceeds 90% sustained for over 2 minutes",
+    "Application logs show thread saturation or timeout cascades"
+  ],
+  "steps": [
+    "Capture process thread dump and profiling snapshot",
+    "Perform rolling restart of saturated application worker pods",
+    "Check CPU drop and request latency normalization"
+  ]
+}

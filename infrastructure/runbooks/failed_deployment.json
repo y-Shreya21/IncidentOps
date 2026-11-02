@@ -1,0 +1,20 @@
+{
+  "runbook_id": "RB-DEP-002",
+  "title": "Failed Application Deployment Rollback",
+  "applicable_symptoms": ["deployment failure", "post-release 500 errors", "bad release", "ModuleNotFoundError", "NullPointerException", "AttributeError after deployment"],
+  "recommended_action": "rollback",
+  "fallback_action": "hold_and_escalate",
+  "target_service": "affected_service",
+  "risk_level": "medium",
+  "preconditions": [
+    "New deployment or release detected within the last 30 minutes",
+    "Application error rate elevated immediately following the release timestamp",
+    "Underlying infrastructure and database dependencies are reported healthy"
+  ],
+  "steps": [
+    "Identify current running version and previous stable release artifact/image tag",
+    "Trigger rolling deployment rollback to previous stable tag",
+    "Monitor error rate on application endpoints for 3 minutes",
+    "Verify health check responds with HTTP 200 OK"
+  ]
+}

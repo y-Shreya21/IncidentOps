@@ -1,0 +1,19 @@
+{
+  "runbook_id": "RB-DB-001",
+  "title": "Database Connectivity Recovery",
+  "applicable_symptoms": ["database connection timeout", "connection refused", "database unavailable", "psycopg2.OperationalError"],
+  "recommended_action": "restart",
+  "fallback_action": "failover",
+  "target_service": "postgres",
+  "risk_level": "medium",
+  "preconditions": [
+    "Dependency health check confirms database is unhealthy or unresponsive",
+    "Application logs show repeated DB connection timeouts or operational errors"
+  ],
+  "steps": [
+    "Verify database service process status and container state",
+    "Initiate restart of postgres service container or process",
+    "Wait 10 seconds and test database connection pool",
+    "If restart fails, initiate failover to standby replica"
+  ]
+}
