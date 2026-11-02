@@ -1,12 +1,23 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { IncidentState } from '../types';
-import { Scale, CheckCircle2, AlertOctagon, ShieldCheck, ArrowRight, UserCheck } from 'lucide-react';
+import { Scale, CheckCircle2, AlertOctagon, ShieldCheck, ArrowRight, UserCheck, Loader2 } from 'lucide-react';
 
 interface Props {
   incident: IncidentState | null;
+  onApproveMitigation?: (incidentId: string, action: string, targetService: string) => Promise<void>;
+  onEscalate?: (incidentId: string) => Promise<void>;
+  loading?: boolean;
 }
 
-export const DecisionPage: React.FC<Props> = ({ incident }) => {
+export const DecisionPage: React.FC<Props> = ({
+  incident,
+  onApproveMitigation,
+  onEscalate,
+  loading: parentLoading = false,
+}) => {
+  const [actionLoading, setActionLoading] = useState(false);
+  const [actionSuccess, setActionSuccess] = useState<string | null>(null);
+
   if (!incident) {
     return (
       <div className="bg-slate-900 border border-slate-800 rounded-xl p-12 text-center text-slate-400">
@@ -25,7 +36,36 @@ export const DecisionPage: React.FC<Props> = ({ incident }) => {
     );
   }
 
-  const isEscalated = dec.decision_status === 'insufficient_evidence' || dec.escalation_required;
+  const isEscalated = dec.decision_status === 'insufficient_evidence' || dec.escalation_required || incident.status === 'escalated';
+  const isMitigated = incident.status === 'mitigated' || incident.status === 'resolved';
+
+  const handleApprove = async () => {
+    if (!onApproveMitigation) return;
+    setActionLoading(true);
+    setActionSuccess(null);
+    try {
+      await onApproveMitigation(incident.incident_id, dec.mitigation_decision, dec.target_service);
+      setActionSuccess(`Mitigation [${dec.mitigation_decision.toUpperCase()}] executed and recorded in the audit trail.`);
+    } catch (e: any) {
+      console.error(e);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleEscalate = async () => {
+    if (!onEscalate) return;
+    setActionLoading(true);
+    setActionSuccess(null);
+    try {
+      await onEscalate(incident.incident_id);
+      setActionSuccess(`Incident ${incident.incident_id} successfully escalated to Senior SRE on-call team.`);
+    } catch (e: any) {
+      console.error(e);
+    } finally {
+      setActionLoading(false);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -145,26 +185,50 @@ export const DecisionPage: React.FC<Props> = ({ incident }) => {
 
           {/* Safety Approval Panel */}
           <div className="border border-amber-800/60 bg-amber-950/30 p-4 rounded-lg space-y-3">
-            <div className="flex items-center gap-2 text-amber-300 text-xs font-semibold">
-              <UserCheck className="w-4 h-4" />
-              Human Operator Confirmation (Safety Gate)
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-amber-300 text-xs font-semibold">
+                <UserCheck className="w-4 h-4" />
+                Human Operator Confirmation (Safety Gate)
+              </div>
+              {isMitigated && (
+                <span className="text-[11px] bg-emerald-900/80 border border-emerald-700 text-emerald-200 px-2.5 py-0.5 rounded font-semibold flex items-center gap-1">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /> MITIGATED
+                </span>
+              )}
+              {isEscalated && (
+                <span className="text-[11px] bg-purple-900/80 border border-purple-700 text-purple-200 px-2.5 py-0.5 rounded font-semibold flex items-center gap-1">
+                  <AlertOctagon className="w-3.5 h-3.5 text-purple-400" /> ESCALATED
+                </span>
+              )}
             </div>
+
             <p className="text-xs text-slate-300">
               In adherence to engineering safety invariants, automated destructive actions are halted by default.
               An authorized Incident Responder or SRE must authorize execution.
             </p>
+
+            {actionSuccess && (
+              <div className="p-2.5 bg-emerald-950/80 border border-emerald-800 rounded text-xs text-emerald-300 flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                <span>{actionSuccess}</span>
+              </div>
+            )}
+
             <div className="flex items-center gap-3 pt-1">
               <button
-                onClick={() => alert(`Mitigation [${dec.mitigation_decision.toUpperCase()}] approved on ${dec.target_service}. Logged to append-only audit trail.`)}
-                className="bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-xs px-4 py-2 rounded-lg transition"
+                onClick={handleApprove}
+                disabled={actionLoading || parentLoading || isMitigated}
+                className="bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-800 disabled:text-slate-500 disabled:cursor-not-allowed text-white font-medium text-xs px-4 py-2 rounded-lg transition flex items-center gap-2"
               >
-                Approve & Execute Mitigation
+                {actionLoading && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                {isMitigated ? 'Mitigation Executed' : 'Approve & Execute Mitigation'}
               </button>
               <button
-                onClick={() => alert('Incident flagged for manual senior SRE triage war-room.')}
-                className="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs px-3 py-2 rounded-lg transition"
+                onClick={handleEscalate}
+                disabled={actionLoading || parentLoading || isEscalated}
+                className="bg-slate-800 hover:bg-slate-700 disabled:bg-slate-900 disabled:text-slate-600 disabled:cursor-not-allowed text-slate-300 text-xs px-3 py-2 rounded-lg transition flex items-center gap-2"
               >
-                Escalate to Senior SRE
+                {isEscalated ? 'Escalated to Senior SRE' : 'Escalate to Senior SRE'}
               </button>
             </div>
           </div>
