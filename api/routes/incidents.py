@@ -215,3 +215,42 @@ def approve_mitigation(
         "approved_by": current_user.username,
         "event_id": event.event_id,
     }
+
+
+class EscalateIncidentRequest(BaseModel):
+    notes: Optional[str] = "Manually escalated to Senior SRE team for deep-dive triage."
+
+
+@router.post("/{incident_id}/escalate")
+def escalate_incident(
+    incident_id: str,
+    escalation: Optional[EscalateIncidentRequest] = None,
+    current_user: UserAuth = Depends(require_roles([ROLE_ADMIN, ROLE_RESPONDER, ROLE_SRE])),
+):
+    """Escalates incident to Senior SREs for manual triage."""
+    inc = board.get_incident(incident_id)
+    if not inc:
+        raise HTTPException(status_code=404, detail=f"Incident '{incident_id}' not found")
+
+    notes = escalation.notes if escalation else "Manually escalated to Senior SRE team."
+
+    event = board.event_logger.log_event(
+        incident_id=incident_id,
+        agent=f"Human Operator ({current_user.username})",
+        event_type="incident_escalated",
+        payload={
+            "escalated_by": current_user.username,
+            "operator_role": current_user.role,
+            "notes": notes,
+        },
+    )
+
+    board.update_status(incident_id, IncidentStatus.ESCALATED)
+
+    return {
+        "status": "escalated",
+        "incident_id": incident_id,
+        "escalated_by": current_user.username,
+        "event_id": event.event_id,
+        "message": "Incident successfully flagged for Senior SRE manual triage.",
+    }

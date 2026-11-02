@@ -106,4 +106,30 @@ export const api = {
       return null;
     }
   },
+
+  async approveMitigation(incidentId: string, action: string, targetService: string): Promise<any> {
+    const res = await fetch(`${API_BASE}/incidents/${incidentId}/approve`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action, target_service: targetService }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ detail: 'Failed to approve mitigation' }));
+      throw new Error(parseApiError(err, 'Failed to approve mitigation'));
+    }
+    return await res.json();
+  },
+
+  async escalateIncident(incidentId: string, notes?: string): Promise<any> {
+    const res = await fetch(`${API_BASE}/incidents/${incidentId}/escalate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ notes: notes || 'Manually escalated to Senior SRE team' }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ detail: 'Failed to escalate incident' }));
+      throw new Error(parseApiError(err, 'Failed to escalate incident'));
+    }
+    return await res.json();
+  },
 };
