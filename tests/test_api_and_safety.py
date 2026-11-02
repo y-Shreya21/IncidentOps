@@ -164,3 +164,56 @@ def test_safety_failover_precondition():
     )
     assert eval_result["preconditions_met"] is False
     assert eval_result["risk_level"] == "high"
+
+
+def test_api_approve_mitigation():
+    """Verify human operator can approve a recommended mitigation action."""
+    # Create incident first via alert
+    payload = {
+        "service": "payment-api",
+        "symptom": "DB timeout",
+        "severity": "critical",
+        "description": "Approve test"
+    }
+    alert_res = client.post("/api/v1/incidents/alert", json=payload)
+    assert alert_res.status_code == 200
+    inc_id = alert_res.json()["incident_id"]
+
+    approve_payload = {
+        "action": "restart",
+        "target_service": "postgres",
+        "notes": "Verified connection drop. Operator authorized restart."
+    }
+    appr_res = client.post(f"/api/v1/incidents/{inc_id}/approve", json=approve_payload)
+    assert appr_res.status_code == 200
+    appr_data = appr_res.json()
+    assert appr_data["status"] == "approved"
+    assert appr_data["action"] == "restart"
+
+    # Verify Blackboard incident status transitioned to MITIGATED
+    get_res = client.get(f"/api/v1/incidents/{inc_id}")
+    assert get_res.status_code == 200
+    assert get_res.json()["status"] == "mitigated"
+
+
+def test_api_escalate_incident():
+    """Verify human operator can escalate incident to Senior SREs."""
+    payload = {
+        "service": "auth-service",
+        "symptom": "Flapping latency",
+        "severity": "high",
+        "description": "Escalation test"
+    }
+    alert_res = client.post("/api/v1/incidents/alert", json=payload)
+    assert alert_res.status_code == 200
+    inc_id = alert_res.json()["incident_id"]
+
+    esc_res = client.post(f"/api/v1/incidents/{inc_id}/escalate", json={"notes": "Paged secondary on-call"})
+    assert esc_res.status_code == 200
+    assert esc_res.json()["status"] == "escalated"
+
+    # Verify Blackboard incident status transitioned to ESCALATED
+    get_res = client.get(f"/api/v1/incidents/{inc_id}")
+    assert get_res.status_code == 200
+    assert get_res.json()["status"] == "escalated"
+

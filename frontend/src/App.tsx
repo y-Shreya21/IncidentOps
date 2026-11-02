@@ -18,6 +18,7 @@ export const App: React.FC = () => {
   const [role, setRole] = useState<UserRole>('IncidentResponder');
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
   const fetchIncidents = async () => {
     setLoading(true);
@@ -55,6 +56,7 @@ export const App: React.FC = () => {
   const handleSimulate = async (scenario: string) => {
     setLoading(true);
     setErrorMsg(null);
+    setSuccessMsg(null);
     try {
       const res = await api.triggerSimulation(scenario);
       await fetchIncidents();
@@ -78,6 +80,7 @@ export const App: React.FC = () => {
   }) => {
     setLoading(true);
     setErrorMsg(null);
+    setSuccessMsg(null);
     try {
       const report = await api.createAlert(payload);
       await fetchIncidents();
@@ -87,6 +90,36 @@ export const App: React.FC = () => {
       }
     } catch (e: any) {
       setErrorMsg(getErrorMessage(e, 'Failed to ingest alert'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleApproveMitigation = async (incidentId: string, action: string, targetService: string) => {
+    setLoading(true);
+    setErrorMsg(null);
+    setSuccessMsg(null);
+    try {
+      await api.approveMitigation(incidentId, action, targetService);
+      setSuccessMsg(`✅ Mitigation [${action.toUpperCase()}] on ${targetService} executed and recorded in the audit log!`);
+      await fetchIncidents();
+    } catch (e: any) {
+      setErrorMsg(getErrorMessage(e, 'Failed to approve mitigation'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleEscalateIncident = async (incidentId: string) => {
+    setLoading(true);
+    setErrorMsg(null);
+    setSuccessMsg(null);
+    try {
+      await api.escalateIncident(incidentId);
+      setSuccessMsg(`⚠️ Incident ${incidentId} flagged and escalated to Senior SRE on-call team!`);
+      await fetchIncidents();
+    } catch (e: any) {
+      setErrorMsg(getErrorMessage(e, 'Failed to escalate incident'));
     } finally {
       setLoading(false);
     }
@@ -113,6 +146,15 @@ export const App: React.FC = () => {
           <div className="bg-red-950/80 border border-red-800 text-red-200 p-3 rounded-lg text-xs flex justify-between items-center">
             <span>{errorMsg}</span>
             <button onClick={() => setErrorMsg(null)} className="font-bold ml-4">✕</button>
+          </div>
+        </div>
+      )}
+
+      {successMsg && (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4 w-full">
+          <div className="bg-emerald-950/80 border border-emerald-800 text-emerald-200 p-3 rounded-lg text-xs flex justify-between items-center">
+            <span>{successMsg}</span>
+            <button onClick={() => setSuccessMsg(null)} className="font-bold ml-4">✕</button>
           </div>
         </div>
       )}
@@ -146,7 +188,14 @@ export const App: React.FC = () => {
 
         {activeTab === 'blackboard' && <BlackboardPage incident={selectedIncident} />}
 
-        {activeTab === 'decision' && <DecisionPage incident={selectedIncident} />}
+        {activeTab === 'decision' && (
+          <DecisionPage
+            incident={selectedIncident}
+            onApproveMitigation={handleApproveMitigation}
+            onEscalate={handleEscalateIncident}
+            loading={loading}
+          />
+        )}
 
         {activeTab === 'timeline' && <TimelinePage incident={selectedIncident} />}
 
