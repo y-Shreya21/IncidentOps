@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: incidentops-warroom
+    env: docker
+    dockerfilePath: Dockerfile
+    plan: free
+    healthCheckPath: /api/v1/health
+    envVars:
+      - key: MOCK_LLM
+        value: "true"
+      - key: ENVIRONMENT
+        value: "production"
+      - key: JWT_SECRET
+        generateValue: true
