@@ -30,8 +30,10 @@ COPY database/ ./database/
 COPY infrastructure/ ./infrastructure/
 COPY security/ ./security/
 COPY tools/ ./tools/
-COPY logs/ ./logs/
 COPY pytest.ini .
+
+# Ensure runtime logs and database directories exist
+RUN mkdir -p logs database
 
 # Copy built frontend distribution so FastAPI serves React UI directly at root /
 COPY --from=frontend-builder /app/frontend/dist ./frontend/dist
