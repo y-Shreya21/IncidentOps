@@ -5,6 +5,7 @@ Defines strongly typed Pydantic models for the Blackboard Architecture.
 
 from __future__ import annotations
 
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, Dict, List, Optional
 from pydantic import BaseModel, Field
@@ -39,8 +40,8 @@ class AlertPayload(BaseModel):
     service: str
     symptom: str
     severity: IncidentSeverity = IncidentSeverity.HIGH
-    timestamp: str
-    description: str
+    timestamp: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    description: str = ""
     incident_id: Optional[str] = None
 
 

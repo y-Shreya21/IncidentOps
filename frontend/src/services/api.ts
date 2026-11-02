@@ -2,6 +2,25 @@ import { IncidentState, PostmortemReport, TimelineEvent, Severity } from '../typ
 
 const API_BASE = '/api/v1';
 
+function parseApiError(errData: any, defaultMsg: string): string {
+  if (!errData) return defaultMsg;
+  if (typeof errData === 'string') return errData;
+  if (typeof errData.detail === 'string') return errData.detail;
+  if (Array.isArray(errData.detail)) {
+    return errData.detail
+      .map((d: any) => {
+        const field = Array.isArray(d.loc) ? d.loc.slice(1).join('.') : (d.loc || 'field');
+        return `${field ? field + ': ' : ''}${d.msg || JSON.stringify(d)}`;
+      })
+      .join(', ');
+  }
+  if (errData.detail && typeof errData.detail === 'object') {
+    return errData.detail.message || JSON.stringify(errData.detail);
+  }
+  if (errData.message && typeof errData.message === 'string') return errData.message;
+  return defaultMsg;
+}
+
 export const api = {
   async getHealth(): Promise<{ status: string; service: string; version: string }> {
     try {
@@ -41,14 +60,18 @@ export const api = {
     timestamp?: string;
     description: string;
   }): Promise<PostmortemReport> {
+    const body = {
+      ...payload,
+      timestamp: payload.timestamp || new Date().toISOString(),
+    };
     const res = await fetch(`${API_BASE}/incidents/alert`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
+      body: JSON.stringify(body),
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({ detail: 'Failed to create incident' }));
-      throw new Error(err.detail || 'Incident creation failed');
+      throw new Error(parseApiError(err, 'Incident creation failed'));
     }
     return await res.json();
   },
@@ -57,7 +80,10 @@ export const api = {
     const res = await fetch(`${API_BASE}/simulate/${scenario}?auto_respond=true`, {
       method: 'POST',
     });
-    if (!res.ok) throw new Error('Simulation failed');
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ detail: 'Simulation failed' }));
+      throw new Error(parseApiError(err, 'Simulation failed'));
+    }
     return await res.json();
   },
 

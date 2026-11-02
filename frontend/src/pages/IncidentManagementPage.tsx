@@ -10,6 +10,7 @@ interface Props {
     symptom: string;
     severity: Severity;
     description: string;
+    timestamp?: string;
   }) => void;
   loading: boolean;
 }
@@ -34,7 +35,13 @@ export const IncidentManagementPage: React.FC<Props> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onCreateIncident({ service, symptom, severity, description });
+    onCreateIncident({
+      service,
+      symptom,
+      severity,
+      description,
+      timestamp: new Date().toISOString(),
+    });
   };
 
   const filtered = incidents.filter((inc) => {

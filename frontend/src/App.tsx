@@ -40,6 +40,18 @@ export const App: React.FC = () => {
 
   const selectedIncident = incidents.find((i) => i.incident_id === selectedIncidentId) || incidents[0] || null;
 
+  const getErrorMessage = (e: any, fallback: string): string => {
+    if (!e) return fallback;
+    if (typeof e === 'string') return e;
+    if (typeof e.message === 'string' && e.message !== '[object Object]') return e.message;
+    if (typeof e.detail === 'string') return e.detail;
+    try {
+      return JSON.stringify(e);
+    } catch {
+      return fallback;
+    }
+  };
+
   const handleSimulate = async (scenario: string) => {
     setLoading(true);
     setErrorMsg(null);
@@ -51,7 +63,7 @@ export const App: React.FC = () => {
         setActiveTab('war_room');
       }
     } catch (e: any) {
-      setErrorMsg(e.message || 'Simulation execution failed');
+      setErrorMsg(getErrorMessage(e, 'Simulation execution failed'));
     } finally {
       setLoading(false);
     }
@@ -62,6 +74,7 @@ export const App: React.FC = () => {
     symptom: string;
     severity: Severity;
     description: string;
+    timestamp?: string;
   }) => {
     setLoading(true);
     setErrorMsg(null);
@@ -73,7 +86,7 @@ export const App: React.FC = () => {
         setActiveTab('war_room');
       }
     } catch (e: any) {
-      setErrorMsg(e.message || 'Failed to ingest alert');
+      setErrorMsg(getErrorMessage(e, 'Failed to ingest alert'));
     } finally {
       setLoading(false);
     }
